@@ -1,0 +1,276 @@
+Escola SENAI “A. Jacob Lafer”
+
+
+João Pedro Poloni Ponce
+Leandro Meireles Braga
+Lucas Paiola Bertholato
+Patrick Donegá Queiroz
+
+
+
+
+
+
+Selecionador de Peças através de tratamento de imagens
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Santo André
+2013
+João Pedro Poloni Ponce
+Leandro Meireles Braga
+Lucas Paiola Bertholato
+Patrick Donegá Queiroz
+
+
+
+
+
+
+
+Selecionador de Peças através de tratamento de imagens
+
+
+
+
+
+
+
+Natureza e objetivo:
+Projeto de conclusão de curso da área de Eletroeletrônica da escola SENAI “A. Jacob Lafer”.
+Área de concentração: Técnico em Eletroeletrônica
+Nome dos Orientadores: 
+Tales Trocolletto
+
+
+
+
+Santo André
+2013
+João Pedro Poloni Ponce
+Leandro Meireles Braga
+Lucas Paiola Bertholato
+Patrick Donegá Queiroz
+
+
+
+
+Selecionador de Peças através de tratamento de imagens
+
+
+
+
+Monografia aprovada como requisito parcial para obtenção do grau de Técnico no Curso de Técnico em Eletroeletrônica, Escola SENAI “A. Jacob Lafer”, pela seguinte banca examinadora:
+Professor
+
+Visto
+
+Professor
+
+Visto
+
+Professor
+
+Visto
+
+Professor
+
+Visto
+
+
+
+
+
+Santo André ____ de Março de 2013
+
+1 - INTRODUÇÃO
+O objetivo deste projeto é identificar e separar um objeto de determinada cor, visando a automatização de uma linha de produção onde seria necessária a diferenciação de pecas.
+Tem sua parte física composta por um robô cartesiano servo-controlado comandado por um microcontrolador 8052. Este tem a função de processar as coordenadas de uma cor pré-determinada em programação. Um dispositivo captador de vídeo terá sua imagem tratada para que essas coordenadas sejam encontradas e devidamente interpretadas e, por conseguinte, o robô funcione da forma desejada, ou seja, retirando a peça da linha de produção.
+
+2. VIABILIDADE TÉCNICA
+Este projeto é tecnicamente viável pelo fato de que a maioria dos conhecimentos empregados foi adquirida nas disciplinas ministradas no curso Técnico de Eletroeletrônica do SENAI.
+O servo-motor é um componente muito útil para o propósito deste projeto, visto que tem um maior torque, podendo ser utilizado com cargas mais pesadas. Possui precisão razoável, visto que não alcança o motor de passo, porém atende às nossas necessidades.
+É viável também devido à utilização da câmera, que pode ser uma webcam facilmente encontrada em lojas de informática; pelas programações em MatLab e Assembly, utilizado em qualquer computador com Windows; e pela utilização de um microcontrolador, por causa de sua facilidade de programação e de alteração de seu programa.
+Matérias utilizadas para cada função:
+Sistemas Microprocessados: Programação em linguagem assembly, determinando como o microcontrolador gerenciará as informações a fim de movimentar os servo-motores;
+Eletrônica de Potencia: Integrar a parte de controle com a parte de potência;
+MATLAB: Conhecimento adquirido fora do curso;
+Eletrônica Analógica: Montagem da fonte de alimentação do microcontrolador;
+Máquinas Elétricas: Aprendizado de controle e funcionamento do robô cartesiano.
+Controle e Automação Industrial: Sensor microswitch para detectar o fim de curso dos eixos.
+3. VIABILIDADE ECONÔMICA
+O projeto é viável economicamente por conta do baixo custo do material que será utilizado, e tendo os componentes com ampla disponibilidade no mercado. O componente de maior custo, o robô cartesiano, será fornecido pelo SENAI, facilitando ainda mais a parte econômica do projeto.
+O custo é compatível com a função que desempenhará.
+4. DESCRIÇÃO DO PROJETO
+
+
+4.1 Funcionamento do projeto
+O projeto consiste em um robô cartesiano capaz de movimentar-se nos eixos x, y e z através de servo-motores controlados pelo microcontrolador 8052, que recebe as coordenadas da imagem que foi adquirida por uma webcam e as processa pelo software MatLab em computador, tendo suas informações transmitidas através de comunicação serial via Bluetooth.
+Com a realização da comunicação entre o MatLab e o microcontrolador é possível fazer uma seleção de peças em uma linha de produção onde duas peças com finalidades distintas estão em movimento na mesma esteira, separando-as pela cor de identificação.
+A programação em MatLab foi desenvolvida tendo como base o programa idealizado por um Engenheiro da Computação indiano chamado Arindam Bose, que teve sua funcionalidade comprovada e adaptada para uso atual com ajuda do próprio e dos nossos professores.
+Segue programa principal desenvolvido no software MatLab para identificação de cores e coordenadas das peças:
+%% Inicialização
+thresh = 0.8; 
+d=serial('COM23');
+vidDevice = imaq.VideoDevice('winvideo', 1, 'RGB24_640x480', ... 
+ 'ROI', [1 1 640 480], ...
+ 'ReturnedColorSpace', 'rgb');
+vidInfo = imaqhwinfo(vidDevice); 
+hblob = vision.BlobAnalysis('AreaOutputPort', false, ... 
+ 'CentroidOutputPort', true, ... 
+ 'BoundingBoxOutputPort', true', ...
+ 'MinimumBlobArea', 800, ...
+ 'MaximumCount', 10);
+hshapeinsWhiteBox = vision.ShapeInserter('BorderColor', 'White'); 
+htextins = vision.TextInserter('Text', 'Number of White Object(s): %2d', ... 
+ 'Location', [7 2], ...
+  'Color', [1 1 1], ... // white color
+ 'Font', 'Courier New', ...
+ 'FontSize', 12);
+htextinsCent = vision.TextInserter('Text', '+ X:%6.2f, Y:%6.2f', ... 
+ 'LocationSource', 'Input port', ...
+ 'Color', [0 0 0], ... // black color
+ 'FontSize', 12);
+hVideoIn = vision.VideoPlayer('Name', 'Final Video', ... 
+ 'Position', [100 100 vidInfo.MaxWidth+20 vidInfo.MaxHeight+30]);
+nFrame = 0; 
+
+%% Processo de Loop
+while(nFrame < 30)
+ rgbFrame = step(vidDevice); 
+ rgbFrame = flipdim(rgbFrame,2); 
+ bwredFrame = im2bw(rgbFrame(:,:,1), thresh); 
+ bwgreenFrame = im2bw(rgbFrame(:,:,2), thresh); 
+ bwblueFrame = im2bw(rgbFrame(:,:,3), thresh); 
+ binFrame = bwredFrame & bwgreenFrame & bwblueFrame; 
+ binFrame = medfilt2(binFrame, [3 3]); 
+ [centroid, bbox] = step(hblob, binFrame); 
+ rgbFrame(1:15,1:215,:) = 0; 
+ vidIn = step(hshapeinsWhiteBox, rgbFrame, bbox); 
+ fprintf(d,centroid);
+ for object = 1:1:length(bbox(:,1)) 
+  vidIn = step(htextinsCent, vidIn, [centroid(object,1) centroid(object,2)], [centroid(object,1)-6 centroid(object,2)-9]); 
+end
+ vidIn = step(htextins, vidIn, uint8(length(bbox(:,1)))); 
+ step(hVideoIn, vidIn); 
+ nFrame = nFrame+1;
+end
+
+%% Limpeza da memória
+release(hVideoIn); 
+release(vidDevice);
+clc;
+
+A comunicação serial será feita através de um módulo Bluetooth, enviando dados para o microcontrolador pelo software MatLab, sendo que este inicia todo o processo de detecção de cores e consequentemente a seleção de peças. Led's indicarão as etapas do processo. As peças ficarão em um plano inerte, assim se dando a demonstração.
+
+
+	
+
+
+
+
+
+
+		
+		
+
+5 - DESENHOS E LAYOUTS (ELÉTRICO)
+
+
+
+
+
+6 - DESENHOS MECÂNICOS
+
+
+
+
+
+
+
+
+
+7- LISTA DE MATERIAIS
+
+Quant.
+Unidade
+Descrição dos Componentes
+Valor
+Unitário
+(R$)
+Valor
+Total
+(R$)
+1
+Pç
+Circuito Integrado Microcontrolador AT89S52-24PU
+5,41
+5,41
+1
+Pç
+Fonte CC regulável 0~12V
+7,40
+7,40
+1
+Pç
+Robô cartesiano
+C/S *
+C/S *
+1
+Pç
+Cristal 12 MHz Meia caneca - HC49S
+0,49
+0,49
+2
+Pç
+Capacitor Disco Cerâmico 33pF x 50V
+0,09
+0,18
+1
+Pç
+Resistor de 8K2 Carbono 5% 1/4W
+0,10
+0,10
+1
+Pç
+Chave Tactil 12x12x12mm 4 Terminais
+0,29
+0,29
+1
+Pç
+Resistor de 10K Carbono 5% 1/4W
+0,10
+0,10
+1
+Pç
+Capacitor Eletrolítico 10uF x 25V
+0,15
+0,15
+1
+Pç
+Webcam 12mp 6 Led Visão Noturna Microfone Usb
+29,98
+29,98
+Custo Final do Projeto
+44,10
+
+*Custeado pelo Senai.
+
+8 - REFERÊNCIAS
+www.soldafria.com.br, utilizado para pesquisa de preço e confecção da lista de materiais.
+www.arindambose.webs.com, utilizado como base do programa desenvolvido para o MATLAB.
+ANEXOS
+
+
